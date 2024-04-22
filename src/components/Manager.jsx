@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bounce, ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const Manager = () => {
   let hide = useRef();
   let pass = useRef();
@@ -10,13 +11,23 @@ const Manager = () => {
   const [form, setform] = useState({ url: "", username: "", password: "" });
   const [passwords, setPasswords] = useState([]);
 
-  useEffect(() => {
-    let oldPass = localStorage.getItem("password");
-    if (oldPass) {
-      setPasswords(JSON.parse(oldPass));
-    }
-  }, []);
-
+   
+   useEffect(() => {
+    //getting passwords from localstorage
+    // let oldPass = localStorage.getItem("password");
+    // if (oldPass) {
+    //   setPasswords(JSON.parse(oldPass));
+    // }
+    getPass();
+   }, []);
+   
+   //getting passwords from mongodb
+  const getPass =async ()=>{
+    let req =await  fetch("http://localhost:3000/")
+    let oldPass = await req.json()
+      setPasswords(oldPass);
+      console.log(oldPass)
+  }
   const showPass = () => {
     if (pass.current.type === "password") {
       hide.current.src = "hide.svg";
@@ -27,8 +38,8 @@ const Manager = () => {
     }
   };
 
-  const savePass = () => {
-    if (form.url === "" || form.username === "" || form.password === "") {
+  const savePass =async () => {
+    if (form.url === "" || form.username === "" || form.password.length < 6) {
       toast.error("Invalid Input!!!", {
         position: "top-right",
         autoClose: 3000,
@@ -42,10 +53,24 @@ const Manager = () => {
       });
       return;
     }
-
-    if(passwords.length === 0){
+    
+    if (passwords.some((i) => i.url === form.url && i.password === form.password)) {
+      toast.error("Password already exists!!!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+      return;
+    }
       setPasswords([form])
-      localStorage.setItem("password",JSON.stringify([form]))
+      //localStorage.setItem("password",JSON.stringify([form]))
+      let res = await fetch("http://localhost:3000/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)})
       toast.success("Password saved successfully!", {
         position: "top-right",
         autoClose: 3000,
@@ -61,40 +86,6 @@ const Manager = () => {
         },
       });
       return;
-    }
-
-    if (passwords.some((i) => i.url === form.url && i.password === form.password)) {
-      toast.error("Password already exists!!!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
-        transition: Bounce,
-      });
-      return;
-    }
-  
-    setPasswords([...passwords, form]);
-    localStorage.setItem("password", JSON.stringify([...passwords, form]));
-  
-    toast.success("Password saved successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "dark",
-      transition: Bounce,
-      onClose: () => {
-        setform({ url: "", username: "", password: "" });
-      },
-    });
   };
   
   
@@ -102,9 +93,10 @@ const Manager = () => {
     setform({ ...form, [e.target.name]: e.target.value });
   };
 
-  const deletePass = (pass) => {
+  const deletePass = async(pass) => {
     let newPass = passwords.filter((i) => i !== pass);
-    localStorage.setItem("password", JSON.stringify(newPass));
+    //localStorage.setItem("password", JSON.stringify(newPass));
+    let res = await fetch("http://localhost:3000/",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:pass.id})})
     setPasswords(newPass);
   };
 
@@ -124,14 +116,15 @@ const Manager = () => {
       });
   };
 
-  const editPass = (pass) => {
+  const editPass = async(pass) => {
     setform(pass);
     let newPass = passwords.filter((i) => i !== pass);
-    localStorage.setItem("password", JSON.stringify(newPass));
+    //localStorage.setItem("password", JSON.stringify(newPass));
+    let res = await fetch("http://localhost:3000/",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:pass.id})})
     setPasswords(newPass);
   };
   return (
-    <div className="container h-[88vh] overflow-scroll overflow-x-hidden">
+    <div className="container h-[88vh] overflow-scroll overflow-x-hidden w-[100vw]">
 
       <ToastContainer
         position="top-right"
@@ -148,7 +141,7 @@ const Manager = () => {
       />
       <ToastContainer />
       
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]">
+      <div className="absolute inset-0 -z-10 h-full w-[100vw] bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]">
         <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,#d5c5ff,transparent)]"></div>
       </div>
 
