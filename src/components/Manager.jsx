@@ -124,7 +124,7 @@ const Manager = () => {
     setPasswords(newPass);
   };
   return (
-    <div className="container h-[88vh] overflow-scroll overflow-x-hidden w-[100vw]">
+    <div className="h-[88vh] overflow-scroll overflow-x-hidden w-screen">
 
       <ToastContainer
         position="top-right"
